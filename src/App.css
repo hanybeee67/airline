@@ -1,0 +1,194 @@
+.start-screen {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  text-align: center;
+  padding: 24px;
+}
+
+.start-screen .tagline {
+  color: var(--text);
+  margin-bottom: 24px;
+}
+
+.start-screen form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 280px;
+}
+
+.start-screen label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  text-align: left;
+  font-size: 14px;
+}
+
+.app-shell {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  max-width: 1100px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 16px 20px 48px;
+}
+
+.app-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+.app-header .brand {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.app-header .brand strong {
+  font-size: 18px;
+  color: var(--text-h);
+}
+
+.app-header .date {
+  font-size: 13px;
+  color: var(--text);
+}
+
+.app-header .tabs {
+  display: flex;
+  gap: 4px;
+}
+
+.app-header .tab {
+  text-transform: capitalize;
+  background: transparent;
+  border-color: transparent;
+}
+
+.app-header .tab.active {
+  background: var(--accent-bg);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.app-header .kpis {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  font-weight: 600;
+}
+
+main {
+  flex: 1;
+}
+
+.panel section {
+  background: var(--panel-bg);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 16px 20px;
+  margin-bottom: 20px;
+}
+
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.card {
+  background: var(--panel-bg);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.card .label {
+  font-size: 13px;
+  color: var(--text);
+}
+
+.card .value {
+  font-size: 22px;
+  font-weight: 600;
+  color: var(--text-h);
+}
+
+.hint {
+  color: var(--text);
+  font-size: 14px;
+}
+
+.warning {
+  color: var(--negative);
+  font-size: 13px;
+  margin: 4px 0 0;
+}
+
+td.actions {
+  display: flex;
+  gap: 8px;
+}
+
+.new-route-form {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 12px;
+  align-items: end;
+}
+
+.new-route-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 13px;
+}
+
+.new-route-form p.hint,
+.new-route-form button {
+  grid-column: 1 / -1;
+  justify-self: start;
+}
+
+.routes table input {
+  width: 70px;
+}
+
+.error-toast {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--negative);
+  color: white;
+  padding: 10px 16px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+}
+
+.error-toast button {
+  background: transparent;
+  border: none;
+  color: white;
+  font-size: 16px;
+  padding: 0;
+}
