@@ -21,6 +21,52 @@ The game opens fullscreen on the world map. Use **☰ Manage** to open the
 Fleet / Routes / Crew / Finance / Rivals / Events panels, and **Advance month →**
 to run the simulation forward. **⤢ Fullscreen** toggles true browser fullscreen.
 
+## Play as a desktop app (offline `.exe`)
+
+The game is also packaged as a native **Windows desktop app** (Electron). The
+installer sets it up like any normal program, adds a **desktop icon** and Start
+menu entry, and the game then runs **completely offline** — no internet needed,
+because the whole game (world data, map, logic) is bundled inside.
+
+There are three ways to get the installer:
+
+### 1. Download it from GitHub Actions (no tools needed) — easiest
+
+1. On GitHub, open the **Actions** tab of this repo.
+2. Choose **Build Windows installer** → **Run workflow**.
+3. When it finishes (~a few minutes), open the run and download the
+   **`sky-airline-tycoon-windows`** artifact. Inside is
+   `Sky Airline Tycoon Setup 1.0.0.exe`.
+4. Run that `.exe` on Windows → it installs the game and puts an icon on your
+   desktop. Double-click the icon to play offline.
+
+Pushing a version tag (e.g. `git tag v1.0.0 && git push --tags`) also builds
+the installer and attaches it to a GitHub **Release**.
+
+### 2. Build it yourself on Windows (one command)
+
+On a Windows PC with [Node.js 22+](https://nodejs.org) installed:
+
+```
+npm install
+npm run dist
+```
+
+The installer appears in the **`release/`** folder as
+`Sky Airline Tycoon Setup 1.0.0.exe`. Run it to install the game and create the
+desktop icon. (`npm run dist:mac` / `npm run dist:linux` build macOS/Linux
+packages instead.)
+
+### 3. Preview the desktop app without installing
+
+```
+npm run desktop     # builds, then opens the game in a native window
+```
+
+> Why can't the `.exe` be committed to the repo? Installer binaries are ~90 MB
+> and rebuilt from source, so they're produced by the steps above rather than
+> stored in git.
+
 ## How to play
 
 1. **Fleet** — buy or lease an aircraft (leasing needs no upfront cash).
