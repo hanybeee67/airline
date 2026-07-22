@@ -1,71 +1,45 @@
 import { createContext, useCallback, useContext, useMemo, useReducer } from "react";
 import type { ReactNode } from "react";
-import type { AcquisitionMode, Company } from "../engine/types";
-import { createCompany } from "../engine/company";
-import * as companyActions from "../engine/company";
-import { simulateMonth } from "../engine/simulation";
-import type { OpenRouteInput } from "../engine/company";
+import type { AcquisitionMode, Airline, World } from "../engine/types";
+import { createWorld, advanceMonth } from "../engine/world";
+import * as airlineActions from "../engine/airline";
+import * as loanActions from "../engine/loans";
+import { hireCrew } from "../engine/crew";
+import type { OpenRouteInput } from "../engine/airline";
 
 interface GameState {
-  company: Company | null;
+  world: World | null;
   lastError: string | null;
 }
 
 type Action =
   | { type: "START_GAME"; name: string }
-  | { type: "BUY_AIRCRAFT"; aircraftTypeId: string; mode: AcquisitionMode }
-  | { type: "SELL_AIRCRAFT"; aircraftId: string }
-  | { type: "OPEN_ROUTE"; input: OpenRouteInput }
-  | { type: "CLOSE_ROUTE"; routeId: string }
-  | { type: "SET_FARE"; routeId: string; fare: number }
-  | { type: "SET_FREQUENCY"; routeId: string; weeklyFrequency: number }
   | { type: "ADVANCE_MONTH" }
+  | { type: "PLAYER"; fn: (player: Airline, world: World) => Airline }
   | { type: "DISMISS_ERROR" };
+
+function updatePlayer(world: World, fn: (player: Airline, world: World) => Airline): World {
+  const player = world.airlines[0];
+  const updated = fn(player, world);
+  return { ...world, airlines: [updated, ...world.airlines.slice(1)] };
+}
 
 function reducer(state: GameState, action: Action): GameState {
   try {
     switch (action.type) {
       case "START_GAME":
-        return { company: createCompany(action.name), lastError: null };
+        return { world: createWorld(action.name), lastError: null };
       case "DISMISS_ERROR":
         return { ...state, lastError: null };
     }
 
-    if (!state.company) return state;
+    if (!state.world) return state;
 
     switch (action.type) {
-      case "BUY_AIRCRAFT":
-        return {
-          company: companyActions.buyAircraft(state.company, action.aircraftTypeId, action.mode),
-          lastError: null,
-        };
-      case "SELL_AIRCRAFT":
-        return {
-          company: companyActions.sellAircraft(state.company, action.aircraftId),
-          lastError: null,
-        };
-      case "OPEN_ROUTE":
-        return {
-          company: companyActions.openRoute(state.company, action.input),
-          lastError: null,
-        };
-      case "CLOSE_ROUTE":
-        return {
-          company: companyActions.closeRoute(state.company, action.routeId),
-          lastError: null,
-        };
-      case "SET_FARE":
-        return {
-          company: companyActions.setFare(state.company, action.routeId, action.fare),
-          lastError: null,
-        };
-      case "SET_FREQUENCY":
-        return {
-          company: companyActions.setFrequency(state.company, action.routeId, action.weeklyFrequency),
-          lastError: null,
-        };
       case "ADVANCE_MONTH":
-        return { company: simulateMonth(state.company).company, lastError: null };
+        return { world: advanceMonth(state.world).world, lastError: null };
+      case "PLAYER":
+        return { world: updatePlayer(state.world, action.fn), lastError: null };
       default:
         return state;
     }
@@ -75,63 +49,49 @@ function reducer(state: GameState, action: Action): GameState {
 }
 
 interface GameContextValue extends GameState {
+  player: Airline | null;
   startGame: (name: string) => void;
+  advanceMonth: () => void;
   buyAircraft: (aircraftTypeId: string, mode: AcquisitionMode) => void;
   sellAircraft: (aircraftId: string) => void;
   openRoute: (input: OpenRouteInput) => void;
   closeRoute: (routeId: string) => void;
   setFare: (routeId: string, fare: number) => void;
   setFrequency: (routeId: string, weeklyFrequency: number) => void;
-  advanceMonth: () => void;
+  hireCrew: (count: number) => void;
+  takeLoan: (amount: number) => void;
+  repayLoan: (loanId: string) => void;
   dismissError: () => void;
 }
 
 const GameContext = createContext<GameContextValue | null>(null);
 
 export function GameProvider({ children }: { children: ReactNode }) {
-  const [state, dispatch] = useReducer(reducer, { company: null, lastError: null });
+  const [state, dispatch] = useReducer(reducer, { world: null, lastError: null });
 
-  const startGame = useCallback((name: string) => dispatch({ type: "START_GAME", name }), []);
-  const buyAircraft = useCallback(
-    (aircraftTypeId: string, mode: AcquisitionMode) =>
-      dispatch({ type: "BUY_AIRCRAFT", aircraftTypeId, mode }),
+  const player = useCallback(
+    (fn: (player: Airline, world: World) => Airline) => dispatch({ type: "PLAYER", fn }),
     [],
   );
-  const sellAircraft = useCallback(
-    (aircraftId: string) => dispatch({ type: "SELL_AIRCRAFT", aircraftId }),
-    [],
-  );
-  const openRoute = useCallback(
-    (input: OpenRouteInput) => dispatch({ type: "OPEN_ROUTE", input }),
-    [],
-  );
-  const closeRoute = useCallback((routeId: string) => dispatch({ type: "CLOSE_ROUTE", routeId }), []);
-  const setFare = useCallback(
-    (routeId: string, fare: number) => dispatch({ type: "SET_FARE", routeId, fare }),
-    [],
-  );
-  const setFrequency = useCallback(
-    (routeId: string, weeklyFrequency: number) =>
-      dispatch({ type: "SET_FREQUENCY", routeId, weeklyFrequency }),
-    [],
-  );
-  const advanceMonth = useCallback(() => dispatch({ type: "ADVANCE_MONTH" }), []);
-  const dismissError = useCallback(() => dispatch({ type: "DISMISS_ERROR" }), []);
 
   const value = useMemo<GameContextValue>(
     () => ({
       ...state,
-      startGame,
-      buyAircraft,
-      sellAircraft,
-      openRoute,
-      closeRoute,
-      setFare,
-      setFrequency,
-      advanceMonth,
-      dismissError,
+      player: state.world ? state.world.airlines[0] : null,
+      startGame: (name) => dispatch({ type: "START_GAME", name }),
+      advanceMonth: () => dispatch({ type: "ADVANCE_MONTH" }),
+      buyAircraft: (id, mode) => player((p) => airlineActions.buyAircraft(p, id, mode)),
+      sellAircraft: (id) => player((p) => airlineActions.sellAircraft(p, id)),
+      openRoute: (input) => player((p) => airlineActions.openRoute(p, input)),
+      closeRoute: (id) => player((p) => airlineActions.closeRoute(p, id)),
+      setFare: (id, fare) => player((p) => airlineActions.setFare(p, id, fare)),
+      setFrequency: (id, freq) => player((p) => airlineActions.setFrequency(p, id, freq)),
+      hireCrew: (count) => player((p, w) => hireCrew(p, count, w.month)),
+      takeLoan: (amount) => player((p) => loanActions.takeLoan(p, amount)),
+      repayLoan: (id) => player((p) => loanActions.repayLoan(p, id)),
+      dismissError: () => dispatch({ type: "DISMISS_ERROR" }),
     }),
-    [state, startGame, buyAircraft, sellAircraft, openRoute, closeRoute, setFare, setFrequency, advanceMonth, dismissError],
+    [state, player],
   );
 
   return <GameContext.Provider value={value}>{children}</GameContext.Provider>;

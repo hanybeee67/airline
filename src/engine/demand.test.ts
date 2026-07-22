@@ -1,23 +1,24 @@
 import { describe, expect, it } from "vitest";
-import { estimateMonthlyDemand, fareFactor, frequencyFactor, reputationFactor } from "./demand";
+import {
+  fareFactor,
+  frequencyFactor,
+  reputationFactor,
+  serviceAttractiveness,
+  totalMarketDemand,
+} from "./demand";
 import { findAirport } from "./data";
 import { distanceKm } from "./geo";
 
 describe("fareFactor", () => {
   it("decreases as fare rises above the reference fare", () => {
-    const low = fareFactor(100, 1000);
-    const high = fareFactor(400, 1000);
-    expect(high).toBeLessThan(low);
+    expect(fareFactor(400, 1000)).toBeLessThan(fareFactor(100, 1000));
   });
 });
 
 describe("frequencyFactor", () => {
   it("increases with more weekly flights but saturates", () => {
-    const few = frequencyFactor(3);
-    const many = frequencyFactor(14);
-    const evenMore = frequencyFactor(28);
-    expect(many).toBeGreaterThan(few);
-    expect(evenMore).toBeLessThanOrEqual(1.6);
+    expect(frequencyFactor(14)).toBeGreaterThan(frequencyFactor(3));
+    expect(frequencyFactor(60)).toBeLessThanOrEqual(1.7);
   });
 });
 
@@ -27,16 +28,22 @@ describe("reputationFactor", () => {
   });
 });
 
-describe("estimateMonthlyDemand", () => {
-  it("is positive for a plausible route and reacts to fare changes", () => {
+describe("totalMarketDemand", () => {
+  it("is positive and falls with distance for a fixed market", () => {
     const icn = findAirport("ICN");
-    const nrt = findAirport("NRT");
-    const distance = distanceKm(icn, nrt);
+    const hnd = findAirport("HND");
+    const lax = findAirport("LAX");
+    const near = totalMarketDemand(icn, hnd, distanceKm(icn, hnd));
+    const far = totalMarketDemand(icn, lax, distanceKm(icn, lax));
+    expect(near).toBeGreaterThan(0);
+    expect(near).toBeGreaterThan(far);
+  });
+});
 
-    const cheap = estimateMonthlyDemand(icn, nrt, distance, 80, 7, 50);
-    const expensive = estimateMonthlyDemand(icn, nrt, distance, 500, 7, 50);
-
-    expect(cheap).toBeGreaterThan(0);
-    expect(cheap).toBeGreaterThan(expensive);
+describe("serviceAttractiveness", () => {
+  it("rises with a cheaper fare and more frequency", () => {
+    const cheapFrequent = serviceAttractiveness(120, 1200, 14, 60);
+    const dearRare = serviceAttractiveness(400, 1200, 3, 60);
+    expect(cheapFrequent).toBeGreaterThan(dearRare);
   });
 });

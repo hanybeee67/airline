@@ -1,34 +1,28 @@
-import type { AcquisitionMode, Company, OwnedAircraft, Route } from "./types";
+import type { AcquisitionMode, Airline, OwnedAircraft, Route } from "./types";
 import { findAircraftType, findAirport } from "./data";
 import { distanceKm } from "./geo";
 import { isRouteDistanceValid, maxWeeklyFrequency } from "./rules";
-
-const STARTING_CASH = 80_000_000;
-const STARTING_REPUTATION = 50;
-
-export function createCompany(name: string): Company {
-  return {
-    name,
-    cash: STARTING_CASH,
-    reputation: STARTING_REPUTATION,
-    month: 0,
-    fleet: [],
-    routes: [],
-    history: [],
-  };
-}
 
 function newId(prefix: string): string {
   return `${prefix}-${crypto.randomUUID()}`;
 }
 
+/** Crew members needed to staff every aircraft currently assigned to a route. */
+export function crewRequiredForRoutes(airline: Airline): number {
+  return airline.routes.reduce((sum, route) => {
+    const aircraft = airline.fleet.find((a) => a.id === route.assignedAircraftId);
+    if (!aircraft) return sum;
+    return sum + findAircraftType(aircraft.aircraftTypeId).crewRequired;
+  }, 0);
+}
+
 export function buyAircraft(
-  company: Company,
+  airline: Airline,
   aircraftTypeId: string,
   mode: AcquisitionMode,
-): Company {
+): Airline {
   const type = findAircraftType(aircraftTypeId);
-  if (mode === "owned" && company.cash < type.purchasePrice) {
+  if (mode === "owned" && airline.cash < type.purchasePrice) {
     throw new Error("Not enough cash to purchase this aircraft.");
   }
 
@@ -36,34 +30,34 @@ export function buyAircraft(
     id: newId("ac"),
     aircraftTypeId,
     acquisitionMode: mode,
-    purchaseMonth: company.month,
+    purchaseMonth: -1,
     condition: 100,
   };
 
   return {
-    ...company,
-    cash: mode === "owned" ? company.cash - type.purchasePrice : company.cash,
-    fleet: [...company.fleet, aircraft],
+    ...airline,
+    cash: mode === "owned" ? airline.cash - type.purchasePrice : airline.cash,
+    fleet: [...airline.fleet, aircraft],
   };
 }
 
-export function sellAircraft(company: Company, aircraftId: string): Company {
-  const aircraft = company.fleet.find((a) => a.id === aircraftId);
+export function sellAircraft(airline: Airline, aircraftId: string): Airline {
+  const aircraft = airline.fleet.find((a) => a.id === aircraftId);
   if (!aircraft) throw new Error("Aircraft not found in fleet.");
-  if (company.routes.some((r) => r.assignedAircraftId === aircraftId)) {
+  if (airline.routes.some((r) => r.assignedAircraftId === aircraftId)) {
     throw new Error("Aircraft is assigned to a route; close the route first.");
   }
 
   const type = findAircraftType(aircraft.aircraftTypeId);
   const salvageValue =
     aircraft.acquisitionMode === "owned"
-      ? type.purchasePrice * 0.5 * (aircraft.condition / 100)
+      ? type.purchasePrice * 0.55 * (aircraft.condition / 100)
       : 0;
 
   return {
-    ...company,
-    cash: company.cash + salvageValue,
-    fleet: company.fleet.filter((a) => a.id !== aircraftId),
+    ...airline,
+    cash: airline.cash + salvageValue,
+    fleet: airline.fleet.filter((a) => a.id !== aircraftId),
   };
 }
 
@@ -75,15 +69,15 @@ export interface OpenRouteInput {
   fare: number;
 }
 
-export function openRoute(company: Company, input: OpenRouteInput): Company {
+export function openRoute(airline: Airline, input: OpenRouteInput): Airline {
   const { originCode, destCode, assignedAircraftId, weeklyFrequency, fare } = input;
 
-  if (originCode === destCode) {
-    throw new Error("Origin and destination must differ.");
-  }
-  const aircraft = company.fleet.find((a) => a.id === assignedAircraftId);
+  if (originCode === destCode) throw new Error("Origin and destination must differ.");
+  if (fare <= 0) throw new Error("Fare must be positive.");
+
+  const aircraft = airline.fleet.find((a) => a.id === assignedAircraftId);
   if (!aircraft) throw new Error("Aircraft not found in fleet.");
-  if (company.routes.some((r) => r.assignedAircraftId === assignedAircraftId)) {
+  if (airline.routes.some((r) => r.assignedAircraftId === assignedAircraftId)) {
     throw new Error("Aircraft is already assigned to a route.");
   }
 
@@ -107,32 +101,32 @@ export function openRoute(company: Company, input: OpenRouteInput): Company {
     assignedAircraftId,
     weeklyFrequency,
     fare,
-    openedMonth: company.month,
+    openedMonth: -1,
   };
 
-  return { ...company, routes: [...company.routes, route] };
+  return { ...airline, routes: [...airline.routes, route] };
 }
 
-export function closeRoute(company: Company, routeId: string): Company {
-  return { ...company, routes: company.routes.filter((r) => r.id !== routeId) };
+export function closeRoute(airline: Airline, routeId: string): Airline {
+  return { ...airline, routes: airline.routes.filter((r) => r.id !== routeId) };
 }
 
-export function setFare(company: Company, routeId: string, fare: number): Company {
+export function setFare(airline: Airline, routeId: string, fare: number): Airline {
   if (fare <= 0) throw new Error("Fare must be positive.");
   return {
-    ...company,
-    routes: company.routes.map((r) => (r.id === routeId ? { ...r, fare } : r)),
+    ...airline,
+    routes: airline.routes.map((r) => (r.id === routeId ? { ...r, fare } : r)),
   };
 }
 
 export function setFrequency(
-  company: Company,
+  airline: Airline,
   routeId: string,
   weeklyFrequency: number,
-): Company {
-  const route = company.routes.find((r) => r.id === routeId);
+): Airline {
+  const route = airline.routes.find((r) => r.id === routeId);
   if (!route) throw new Error("Route not found.");
-  const aircraft = company.fleet.find((a) => a.id === route.assignedAircraftId);
+  const aircraft = airline.fleet.find((a) => a.id === route.assignedAircraftId);
   if (!aircraft) throw new Error("Assigned aircraft not found.");
 
   const type = findAircraftType(aircraft.aircraftTypeId);
@@ -143,7 +137,7 @@ export function setFrequency(
   }
 
   return {
-    ...company,
-    routes: company.routes.map((r) => (r.id === routeId ? { ...r, weeklyFrequency } : r)),
+    ...airline,
+    routes: airline.routes.map((r) => (r.id === routeId ? { ...r, weeklyFrequency } : r)),
   };
 }

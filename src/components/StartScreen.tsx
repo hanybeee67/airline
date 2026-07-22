@@ -7,23 +7,29 @@ export function StartScreen() {
 
   return (
     <div className="start-screen">
-      <h1>Sky Airline Tycoon</h1>
-      <p className="tagline">Build an airline empire, one route at a time.</p>
-      <form
-        onSubmit={(e) => {
-          e.preventDefault();
-          if (name.trim()) startGame(name.trim());
-        }}
-      >
-        <label htmlFor="company-name">Airline name</label>
-        <input
-          id="company-name"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          maxLength={40}
-        />
-        <button type="submit">Found the airline</button>
-      </form>
+      <div className="start-card">
+        <h1>Sky Airline Tycoon</h1>
+        <p className="tagline">
+          Found an airline, fly a modern fleet across the real world map, and
+          outmanoeuvre three rival carriers.
+        </p>
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            if (name.trim()) startGame(name.trim());
+          }}
+        >
+          <label htmlFor="company-name">Airline name</label>
+          <input
+            id="company-name"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            maxLength={40}
+            autoFocus
+          />
+          <button type="submit">Found the airline →</button>
+        </form>
+      </div>
     </div>
   );
 }

@@ -2,28 +2,29 @@ import { useState } from "react";
 import "./App.css";
 import { GameProvider, useGame } from "./state/GameContext";
 import { StartScreen } from "./components/StartScreen";
-import { Header, type Tab } from "./components/Header";
-import { Dashboard } from "./components/Dashboard";
-import { FleetPanel } from "./components/FleetPanel";
-import { RoutesPanel } from "./components/RoutesPanel";
-import { FinancePanel } from "./components/FinancePanel";
+import { Hud } from "./components/Hud";
+import { WorldMap } from "./components/WorldMap";
+import { ManagePanel } from "./components/ManagePanel";
 import { ErrorToast } from "./components/ErrorToast";
 
 function GameScreen() {
-  const { company } = useGame();
-  const [tab, setTab] = useState<Tab>("dashboard");
+  const { world } = useGame();
+  const [panelOpen, setPanelOpen] = useState(true);
+  const [selectedCode, setSelectedCode] = useState<string | undefined>(undefined);
 
-  if (!company) return <StartScreen />;
+  if (!world) return <StartScreen />;
 
   return (
-    <div className="app-shell">
-      <Header tab={tab} onTabChange={setTab} />
-      <main>
-        {tab === "dashboard" && <Dashboard />}
-        {tab === "fleet" && <FleetPanel />}
-        {tab === "routes" && <RoutesPanel />}
-        {tab === "finance" && <FinancePanel />}
-      </main>
+    <div className="game">
+      <div className="map-layer">
+        <WorldMap world={world} selectedCode={selectedCode} />
+      </div>
+      <Hud onOpenPanel={() => setPanelOpen((v) => !v)} />
+      <ManagePanel
+        open={panelOpen}
+        onClose={() => setPanelOpen(false)}
+        onSelectAirport={setSelectedCode}
+      />
       <ErrorToast />
     </div>
   );
