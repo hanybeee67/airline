@@ -4,6 +4,7 @@ import { GameProvider, useGame } from "./state/GameContext";
 import { StartScreen } from "./components/StartScreen";
 import { Hud } from "./components/Hud";
 import { WorldMap } from "./components/WorldMap";
+import { MapLegend } from "./components/MapLegend";
 import { ManagePanel } from "./components/ManagePanel";
 import { ErrorToast } from "./components/ErrorToast";
 
@@ -19,6 +20,7 @@ function GameScreen() {
       <div className="map-layer">
         <WorldMap world={world} selectedCode={selectedCode} />
       </div>
+      <MapLegend />
       <Hud onOpenPanel={() => setPanelOpen((v) => !v)} />
       <ManagePanel
         open={panelOpen}

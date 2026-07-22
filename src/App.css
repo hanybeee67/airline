@@ -37,13 +37,43 @@
 
 .world-map .graticule path { fill: none; stroke: var(--graticule); stroke-width: 0.4; }
 .world-map .land path { fill: var(--land); stroke: var(--land-stroke); stroke-width: 0.3; }
-.world-map .route { fill: none; stroke-width: 0.7; opacity: 0.35; }
-.world-map .route.player { stroke-width: 1.1; opacity: 0.95; stroke-linecap: round; }
-.world-map .route.competitor { stroke-dasharray: 2 2; }
-.world-map .airport-dot { fill: #eaf2ff; stroke: #0a1526; stroke-width: 0.3; }
-.world-map .airport.selected .airport-dot { fill: var(--accent); stroke: #fff; stroke-width: 0.6; }
-.world-map .airport-label { fill: #cdd8ee; font-size: 5px; font-weight: 600; }
-.world-map .airport.selected .airport-label { fill: var(--text-h); }
+
+.world-map .route { fill: none; stroke-width: 0.7; opacity: 0.4; }
+.world-map .route.player {
+  stroke-width: 1.2;
+  opacity: 0.95;
+  stroke-linecap: round;
+  stroke-dasharray: 6 4;
+  animation: route-flow 1.4s linear infinite;
+}
+.world-map .route.competitor {
+  stroke-dasharray: 2 3;
+  animation: route-flow 3s linear infinite;
+}
+@keyframes route-flow { to { stroke-dashoffset: -20; } }
+
+.world-map .flying-plane path { paint-order: stroke; }
+.world-map .hub-pulse { fill: #7fb0ff; }
+
+.world-map .airport-dot { fill: #eaf2ff; stroke: #0a1526; stroke-width: 0.4; }
+.world-map .airport.selected .airport-dot { fill: var(--accent); stroke: #fff; stroke-width: 0.8; }
+.world-map .airport-label {
+  font-size: 6.5px;
+  paint-order: stroke;
+  stroke: rgba(6, 12, 24, 0.85);
+  stroke-width: 1.6px;
+  stroke-linejoin: round;
+}
+.world-map .airport-code { fill: #ffffff; font-weight: 700; }
+.world-map .airport-city { fill: #b9c9e8; font-weight: 500; }
+.world-map .airport.selected .airport-code,
+.world-map .airport.selected .airport-city { fill: #fff; }
+@media (prefers-color-scheme: light) {
+  .world-map .airport-label { stroke: rgba(255, 255, 255, 0.9); }
+  .world-map .airport-code { fill: #0c1220; }
+  .world-map .airport-city { fill: #33507a; }
+  .world-map .airport-dot { fill: #1b3a6b; stroke: #fff; }
+}
 
 /* ---------- HUD ---------- */
 .hud {
@@ -153,9 +183,107 @@ td.actions { display: flex; gap: 6px; }
 }
 .error-toast button { background: transparent; border: none; color: #fff; font-size: 16px; padding: 0; }
 
+/* ---------- Tabs with icons + fade ---------- */
+.mtab { display: inline-flex; align-items: center; gap: 5px; }
+.mtab .ui-icon { opacity: 0.85; }
+.tab-fade { animation: fade-up 0.22s ease both; }
+@keyframes fade-up { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+
+/* ---------- Aircraft market cards ---------- */
+.market-grid { display: grid; grid-template-columns: 1fr; gap: 10px; }
+.market-card {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 12px;
+  background: var(--panel-solid);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 10px 14px;
+  transition: transform 0.15s, border-color 0.15s;
+}
+.market-card:hover { transform: translateY(-2px); border-color: var(--accent); }
+.market-art {
+  background: linear-gradient(135deg, rgba(79,155,255,0.14), rgba(79,155,255,0.02));
+  border-radius: 10px;
+  padding: 4px 8px;
+  display: grid;
+  place-items: center;
+}
+.market-info { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.market-info strong { color: var(--text-h); }
+.market-prices { font-size: 13px; margin-top: 2px; }
+.market-actions { display: flex; flex-direction: column; gap: 6px; }
+
+/* ---------- Fleet groups ---------- */
+.fleet-groups { display: flex; flex-direction: column; gap: 14px; }
+.fleet-group { border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+.fleet-group-head {
+  display: flex; align-items: center; gap: 12px;
+  padding: 8px 14px;
+  background: linear-gradient(135deg, rgba(79,155,255,0.12), transparent);
+}
+.fleet-group-head > div { display: flex; flex-direction: column; }
+.fleet-group-head strong { color: var(--text-h); }
+.fleet-group .table-scroll { padding: 0 6px 6px; }
+
+/* ---------- Airline list (rivals) ---------- */
+.airline-list { display: flex; flex-direction: column; gap: 8px; }
+.airline-card { border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+.airline-card.open { border-color: var(--accent); }
+.airline-head {
+  width: 100%;
+  display: grid;
+  grid-template-columns: auto 1fr auto auto;
+  align-items: center;
+  gap: 10px;
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  padding: 10px 14px;
+  text-align: left;
+}
+.airline-name { color: var(--text-h); font-weight: 600; }
+.airline-meta { color: var(--muted); font-size: 13px; }
+.chev { color: var(--muted); }
+.airline-fleet {
+  display: flex; flex-wrap: wrap; gap: 8px;
+  padding: 4px 14px 14px;
+  animation: fade-up 0.2s ease both;
+}
+.fleet-chip {
+  display: flex; align-items: center; gap: 8px;
+  background: var(--panel-solid);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 6px 12px 6px 6px;
+}
+.fleet-chip > div { display: flex; flex-direction: column; }
+.fleet-chip strong { color: var(--text-h); font-size: 13px; }
+
+/* ---------- Map legend ---------- */
+.map-legend {
+  position: absolute;
+  left: 14px; bottom: 14px;
+  background: var(--panel-bg);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 10px 12px;
+  backdrop-filter: blur(8px);
+  box-shadow: 0 12px 30px rgba(0,0,0,0.35);
+  z-index: 5;
+}
+.legend-title { font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--muted); display: block; margin-bottom: 6px; }
+.legend-row { display: flex; align-items: center; gap: 8px; padding: 2px 0; }
+.legend-row.gone { opacity: 0.4; text-decoration: line-through; }
+.legend-swatch { width: 11px; height: 11px; border-radius: 3px; flex: none; }
+.legend-name { font-size: 13px; color: var(--text-h); }
+.legend-you { margin-left: 6px; font-size: 10px; background: var(--accent-bg); color: var(--accent); padding: 1px 6px; border-radius: 6px; }
+
 @media (max-width: 720px) {
   .hud { flex-wrap: wrap; }
   .hud-stats { order: 3; width: 100%; justify-content: space-between; }
   .manage-panel { width: 100%; left: 0; right: 0; top: auto; bottom: 0; height: 62vh; border-radius: 14px 14px 0 0; transform: translateY(calc(100% + 20px)); }
   .manage-panel.open { transform: none; }
+  .map-legend { display: none; }
 }
