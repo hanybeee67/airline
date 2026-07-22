@@ -1,11 +1,22 @@
+import { useEffect, useState } from "react";
 import { useGame } from "../state/GameContext";
 import { netWorth } from "../engine/loans";
 import { formatMoney, monthLabel } from "../format";
 import { useFullscreen } from "../useFullscreen";
+import { useCountUp } from "../useCountUp";
+import { isMuted, playSound, setMuted, subscribeMuted } from "../sound";
 
 export function Hud({ onOpenPanel }: { onOpenPanel: () => void }) {
   const { world, player, advanceMonth } = useGame();
   const { isFullscreen, toggle } = useFullscreen();
+  const [muted, setMutedState] = useState(isMuted());
+
+  useEffect(() => subscribeMuted(setMutedState), []);
+
+  const cash = useCountUp(player?.cash ?? 0);
+  const worth = useCountUp(player ? netWorth(player) : 0);
+  const rep = useCountUp(player?.reputation ?? 0);
+
   if (!world || !player) return null;
 
   return (
@@ -19,21 +30,35 @@ export function Hud({ onOpenPanel }: { onOpenPanel: () => void }) {
       </div>
 
       <div className="hud-stats">
-        <Stat label="Cash" value={formatMoney(player.cash)} negative={player.cash < 0} />
-        <Stat label="Net worth" value={formatMoney(netWorth(player))} />
-        <Stat label="Reputation" value={`${Math.round(player.reputation)}`} />
+        <Stat label="Cash" value={formatMoney(cash)} negative={cash < 0} />
+        <Stat label="Net worth" value={formatMoney(worth)} />
+        <Stat label="Reputation" value={`${Math.round(rep)}`} />
         <Stat label="Fleet" value={`${player.fleet.length}`} />
         <Stat label="Routes" value={`${player.routes.length}`} />
       </div>
 
       <div className="hud-actions">
+        <button
+          className="ghost"
+          onClick={() => setMuted(!muted)}
+          title={muted ? "Unmute" : "Mute"}
+        >
+          {muted ? "🔇" : "🔊"}
+        </button>
         <button className="ghost" onClick={toggle} title="Toggle fullscreen">
           {isFullscreen ? "⤢ Exit" : "⤢ Fullscreen"}
         </button>
         <button className="ghost" onClick={onOpenPanel}>
           ☰ Manage
         </button>
-        <button className="advance" onClick={advanceMonth} disabled={world.gameOver}>
+        <button
+          className="advance"
+          onClick={() => {
+            playSound("advance");
+            advanceMonth();
+          }}
+          disabled={world.gameOver}
+        >
           Advance month →
         </button>
       </div>

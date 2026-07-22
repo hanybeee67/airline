@@ -50,7 +50,7 @@ export function CompetitorsPanel() {
                     ) : (
                       [...groups.entries()].map(([typeId, count]) => (
                         <div key={typeId} className="fleet-chip">
-                          <AircraftArt typeId={typeId} livery={a.color} height={38} />
+                          <AircraftArt typeId={typeId} livery={a.color} scheme={a.livery} height={38} />
                           <div>
                             <strong>{findAircraftType(typeId).name}</strong>
                             <span className="muted">×{count}</span>

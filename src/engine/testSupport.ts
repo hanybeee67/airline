@@ -7,6 +7,7 @@ export function makeAirline(overrides: Partial<Airline> = {}): Airline {
     name: "Test Air",
     isPlayer: true,
     color: "#2f6feb",
+    livery: "swoosh",
     cash: 300_000_000,
     reputation: 50,
     fleet: [],

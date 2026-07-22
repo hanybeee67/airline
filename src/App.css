@@ -55,6 +55,42 @@
 .world-map .flying-plane path { paint-order: stroke; }
 .world-map .hub-pulse { fill: #7fb0ff; }
 
+/* Route flow speeds up while a month is being advanced */
+.world-map.advancing .route { animation-duration: 0.45s; }
+
+/* New-route draw-in */
+.world-map .route-draw {
+  fill: none;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-dasharray: 100;
+  stroke-dashoffset: 100;
+  filter: url(#routeGlow);
+  animation: route-draw 0.95s ease forwards;
+}
+@keyframes route-draw { to { stroke-dashoffset: 0; } }
+
+.world-map .depart-pulse {
+  fill: none;
+  stroke-width: 1.4;
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: depart-pulse 1s ease-out forwards;
+}
+@keyframes depart-pulse {
+  0% { r: 2; opacity: 0.9; }
+  100% { r: 16; opacity: 0; }
+}
+
+/* Month-advance sweep */
+.world-map .month-sweep { animation: month-sweep 1s ease-in-out forwards; }
+@keyframes month-sweep {
+  0% { transform: translateX(-160px); opacity: 0; }
+  15% { opacity: 1; }
+  85% { opacity: 1; }
+  100% { transform: translateX(1000px); opacity: 0; }
+}
+
 .world-map .airport-dot { fill: #eaf2ff; stroke: #0a1526; stroke-width: 0.4; }
 .world-map .airport.selected .airport-dot { fill: var(--accent); stroke: #fff; stroke-width: 0.8; }
 .world-map .airport-label {

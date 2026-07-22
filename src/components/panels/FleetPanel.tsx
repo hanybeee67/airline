@@ -2,6 +2,7 @@ import { useGame } from "../../state/GameContext";
 import { AIRCRAFT_TYPES, findAircraftType } from "../../engine/data";
 import { formatMoney } from "../../format";
 import { AircraftArt } from "../AircraftArt";
+import { playSound } from "../../sound";
 
 export function FleetPanel() {
   const { player, buyAircraft, sellAircraft } = useGame();
@@ -24,7 +25,7 @@ export function FleetPanel() {
           {AIRCRAFT_TYPES.map((type) => (
             <div key={type.id} className="market-card">
               <div className="market-art">
-                <AircraftArt typeId={type.id} livery={player.color} height={58} />
+                <AircraftArt typeId={type.id} livery={player.color} scheme={player.livery} height={58} />
               </div>
               <div className="market-info">
                 <strong>{type.name}</strong>
@@ -35,8 +36,13 @@ export function FleetPanel() {
                 </div>
               </div>
               <div className="market-actions">
-                <button disabled={player.cash < type.purchasePrice} onClick={() => buyAircraft(type.id, "owned")}>Buy</button>
-                <button onClick={() => buyAircraft(type.id, "leased")}>Lease</button>
+                <button
+                  disabled={player.cash < type.purchasePrice}
+                  onClick={() => { playSound("cash"); buyAircraft(type.id, "owned"); }}
+                >
+                  Buy
+                </button>
+                <button onClick={() => { playSound("click"); buyAircraft(type.id, "leased"); }}>Lease</button>
               </div>
             </div>
           ))}
@@ -54,7 +60,7 @@ export function FleetPanel() {
               return (
                 <div key={typeId} className="fleet-group">
                   <div className="fleet-group-head">
-                    <AircraftArt typeId={typeId} livery={player.color} height={46} />
+                    <AircraftArt typeId={typeId} livery={player.color} scheme={player.livery} height={46} />
                     <div>
                       <strong>{type.name}</strong>
                       <span className="muted">×{aircraft.length}</span>

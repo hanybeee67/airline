@@ -1,5 +1,6 @@
 import type {
   Airline,
+  LiveryScheme,
   MonthlyReport,
   RouteReport,
   World,
@@ -42,6 +43,7 @@ function emptyAirline(
   id: string,
   name: string,
   color: string,
+  livery: LiveryScheme,
   isPlayer: boolean,
 ): Airline {
   return {
@@ -49,6 +51,7 @@ function emptyAirline(
     name,
     isPlayer,
     color,
+    livery,
     cash: STARTING_CASH,
     reputation: 50,
     fleet: [],
@@ -60,19 +63,19 @@ function emptyAirline(
   };
 }
 
-const AI_SEEDS: { name: string; color: string }[] = [
-  { name: "Aurora Atlantic", color: "#e0533d" },
-  { name: "Pacific Meridian", color: "#2f9e6d" },
-  { name: "Continental Star", color: "#c9922b" },
+const AI_SEEDS: { name: string; color: string; livery: LiveryScheme }[] = [
+  { name: "Aurora Atlantic", color: "#e0533d", livery: "stripe" },
+  { name: "Pacific Meridian", color: "#2f9e6d", livery: "tail" },
+  { name: "Continental Star", color: "#c9922b", livery: "belly" },
 ];
 
 export function createWorld(playerName: string, seed = 20240722): World {
   const rng = mulberry32(seed);
-  const player = emptyAirline("player", playerName, "#2f6feb", true);
+  const player = emptyAirline("player", playerName, "#2f6feb", "swoosh", true);
 
   const airlines: Airline[] = [player];
   AI_SEEDS.forEach((s, i) => {
-    let ai = emptyAirline(`ai-${i}`, s.name, s.color, false);
+    let ai = emptyAirline(`ai-${i}`, s.name, s.color, s.livery, false);
     ai = seedAiAirline(ai, rng);
     airlines.push(ai);
   });

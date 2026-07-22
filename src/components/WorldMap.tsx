@@ -1,9 +1,10 @@
-import { useMemo } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { World } from "../engine/types";
 import { AIRPORTS, findAirport } from "../engine/data";
 import { distanceKm, greatCirclePath } from "../engine/geo";
 import { WORLD_LAND_PATHS } from "../map/worldPaths";
 import { MAP_HEIGHT, MAP_WIDTH, projectPathSegments, projectPoint } from "../map/projection";
+import { playSound } from "../sound";
 
 interface RenderRoute {
   key: string;
@@ -14,7 +15,17 @@ interface RenderRoute {
   durSec: number;
 }
 
-export function WorldMap({ world, selectedCode }: { world: World; selectedCode?: string }) {
+export function WorldMap({
+  world,
+  selectedCode,
+  advancing,
+}: {
+  world: World;
+  selectedCode?: string;
+  advancing?: boolean;
+}) {
+  const player = world.airlines[0];
+
   const routes = useMemo<RenderRoute[]>(() => {
     const rendered: RenderRoute[] = [];
     for (const airline of world.airlines) {
@@ -38,11 +49,31 @@ export function WorldMap({ world, selectedCode }: { world: World; selectedCode?:
     return rendered.sort((a, b) => Number(a.isPlayer) - Number(b.isPlayer));
   }, [world]);
 
+  // Detect newly opened player routes and play a draw-in + departure effect.
+  const prevRouteIds = useRef<Set<string> | null>(null);
+  const [effects, setEffects] = useState<{ id: string; origin: string }[]>([]);
+  useEffect(() => {
+    const ids = new Set(player.routes.map((r) => r.id));
+    if (prevRouteIds.current === null) {
+      prevRouteIds.current = ids;
+      return;
+    }
+    const fresh = player.routes.filter((r) => !prevRouteIds.current!.has(r.id));
+    prevRouteIds.current = ids;
+    if (fresh.length > 0) {
+      playSound("whoosh");
+      const add = fresh.map((r) => ({ id: r.id, origin: r.originCode }));
+      setEffects((e) => [...e, ...add]);
+      const addIds = new Set(add.map((a) => a.id));
+      setTimeout(() => setEffects((e) => e.filter((x) => !addIds.has(x.id))), 1100);
+    }
+  }, [world, player.routes]);
+
   const graticule = useMemo(() => buildGraticule(), []);
 
   return (
     <svg
-      className="world-map"
+      className={`world-map${advancing ? " advancing" : ""}`}
       viewBox={`0 0 ${MAP_WIDTH} ${MAP_HEIGHT}`}
       preserveAspectRatio="xMidYMid meet"
       role="img"
@@ -53,6 +84,11 @@ export function WorldMap({ world, selectedCode }: { world: World; selectedCode?:
           <stop offset="0%" stopColor="var(--ocean-1)" />
           <stop offset="100%" stopColor="var(--ocean-2)" />
         </radialGradient>
+        <linearGradient id="sweep" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0" stopColor="#ffffff" stopOpacity="0" />
+          <stop offset="0.5" stopColor="#8fc0ff" stopOpacity="0.35" />
+          <stop offset="1" stopColor="#ffffff" stopOpacity="0" />
+        </linearGradient>
         <filter id="routeGlow" x="-20%" y="-20%" width="140%" height="140%">
           <feGaussianBlur stdDeviation="1.2" result="b" />
           <feMerge>
@@ -104,6 +140,27 @@ export function WorldMap({ world, selectedCode }: { world: World; selectedCode?:
         ))}
       </g>
 
+      {/* New-route draw-in + departure pulse */}
+      <g className="route-effects">
+        {effects.map((fx) => {
+          const route = routes.find((r) => r.key === fx.id);
+          const o = projectPoint(findAirport(fx.origin));
+          return (
+            <g key={`fx-${fx.id}`}>
+              {route && (
+                <path
+                  className="route-draw"
+                  d={route.motionPath}
+                  stroke={player.color}
+                  pathLength={100}
+                />
+              )}
+              <circle className="depart-pulse" cx={o.x} cy={o.y} r="2" stroke={player.color} />
+            </g>
+          );
+        })}
+      </g>
+
       {/* Airports */}
       <g className="airports">
         {AIRPORTS.map((airport) => {
@@ -133,6 +190,11 @@ export function WorldMap({ world, selectedCode }: { world: World; selectedCode?:
           );
         })}
       </g>
+
+      {/* Month-advance sweep */}
+      {advancing && (
+        <rect key={world.month} className="month-sweep" x="0" y="0" width="160" height={MAP_HEIGHT} fill="url(#sweep)" />
+      )}
     </svg>
   );
 }

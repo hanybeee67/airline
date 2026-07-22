@@ -75,12 +75,16 @@ export interface CrewState {
   inTraining: { count: number; readyMonth: number }[];
 }
 
+export type LiveryScheme = "swoosh" | "stripe" | "tail" | "belly";
+
 export interface Airline {
   id: string;
   name: string;
   isPlayer: boolean;
   /** Colour used to render this airline's routes on the map. */
   color: string;
+  /** Paint scheme used when illustrating this airline's aircraft. */
+  livery: LiveryScheme;
   cash: number;
   reputation: number;
   fleet: OwnedAircraft[];
